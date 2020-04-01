@@ -1,4 +1,4 @@
 module.exports = {
-    title: 'vue-analysis',
-    description: 'vue-analysis'
+    title: "joe's blog",
+    description: 'personal blog'
 }
