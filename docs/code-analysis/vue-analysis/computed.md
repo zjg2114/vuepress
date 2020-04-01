@@ -1,6 +1,6 @@
-### computed
-> auth: zhoujg
-#### computed的作用
+# 计算属性computed
+
+## computed的作用
     
 vue模板内的表达式非常便利，但是设计它们的初衷是用于简单运算的。在模板中放入太多的逻辑会让模板过重且难以维护。例如：
 ```html
@@ -11,7 +11,7 @@ vue模板内的表达式非常便利，但是设计它们的初衷是用于简�
 在这个地方，模板不再是简单的声明式逻辑，对于任何复杂逻辑，你都应当使用计算属性;
 当数据发生变化时(只要数据是响应式的,即使是引用类型),computed会自动返回计算后的值;
 
-#### computed的setter和getter
+## computed的写法
 计算属性默认只有 getter，特殊情况可以提供一个 setter：
 例如需要和vuex中的数据双向绑定的时候(在set中提供mutation的方法)
 ```js
@@ -27,7 +27,7 @@ computed: {
 }
 ```
 
-#### computed的原理
+## 原理分析
 当vue初始化state的时候会调用initComputed方法
 ```js
 function initState(vm) {    

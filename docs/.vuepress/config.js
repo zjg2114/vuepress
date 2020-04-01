@@ -15,7 +15,7 @@ module.exports = {
       { text: '项目实践', link: '/project/' }
     ],
     sidebar: {
-      '/code-analysis/vue-analysis/': ['', 'reactive']
+      '/code-analysis/vue-analysis/': ['', 'reactive','computed']
     }
   }
 };
