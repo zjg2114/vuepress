@@ -60,7 +60,7 @@ console.log(a); // 123
 ```js
 var a = [];
 for (var i = 0; i < 10; i++) {
-  a[i] = function() {
+  a[i] = function () {
     console.log(i);
   };
 }
@@ -74,8 +74,8 @@ a[1](); // 10
 ```js
 var a = [];
 for (var i = 0; i < 10; i++) {
-  (function(i) {
-    a[i] = function() {
+  (function (i) {
+    a[i] = function () {
       console.log(i);
     };
   })(i);
@@ -97,7 +97,7 @@ let const 将变量的作用域限制在当前代码块中。块级作用域有�
 ```js
 var a = [];
 for (let i = 0; i < 10; i++) {
-  a[i] = function() {
+  a[i] = function () {
     console.log(i);
   };
 }
@@ -142,6 +142,7 @@ a[1](); // 1
   ![闭包](../asserts/closure2.jpg)
 
   发现 inside 对象中有[[Scopes]]数组,其中有两个对象
+
   1. Closure: 包含了 out 函数中的活动对象
   2. Global: 全局对象
 
@@ -152,13 +153,13 @@ a[1](); // 1
 
   再给你们放上一张图  
   ![闭包](../asserts/closure4.jpg)
-  看了这个,不难猜到,虽然定义了a,b,但是只有a被存在了闭包中,也就是说,只有被访问过的变量才会被保存起来的
+  看了这个,不难猜到,虽然定义了 a,b,但是只有 a 被存在了闭包中,也就是说,只有被访问过的变量才会被保存起来的
 
-  到这儿基本上都对闭包也有一定的理解了吧,对于一开始的闭包定义,我更倾向于mdn的说法
+  到这儿基本上都对闭包也有一定的理解了吧,对于一开始的闭包定义,我更倾向于 mdn 的说法
   虽然从理论的角度将,js 中所有函数都是闭包,但是从应用的角度来说,只有当函数以返回值返回、或者当函数以参数形式使用、或者当函数中的变量在函数外被引用时,闭包才有意义。
 
-  闭包很强大,用途之一是实现对象的私有数据。在vue中,对data数据做响应式时,就是把观察者对象存在了get的闭包函数中
-  但是滥用闭包,会导致内存泄漏,也不是所有的闭包都会导致泄漏,只有上述说的'有意义'的闭包才会,可以通过将引用的函数变量名复制为null手动清除;
+  闭包很强大,用途之一是实现对象的私有数据。在 vue 中,对 data 数据做响应式时,就是把观察者对象存在了 get 的闭包函数中
+  但是滥用闭包,会导致内存泄漏,也不是所有的闭包都会导致泄漏,只有上述说的'有意义'的闭包才会,可以通过将引用的函数变量名复制为 null 手动清除;
 
 ## new 操作符
 
@@ -176,12 +177,98 @@ function _new(fn, ...arg) {
 }
 ```
 
-## 防抖
+## 防抖&节流
 
-## 节流
+1. 防抖：控制高频事件触发次数，如果 n 秒内事件再次被触发，则重新计算时间
+
+   思路：每次触发事件时都取消之前的延时调用方法
+
+   ```js
+   function debounce(fn, waiting) {
+     let timeId = null;
+     return function () {
+       fn();
+       clearTimeout(timeId);
+       timeId = setTimeout(() => {
+         fn.apply(this, arguments);
+       }, waiting);
+     };
+   }
+   function resizeCaller() {
+     console.log("resize");
+   }
+   window.addEventListener("resize", debounce(resizeCaller, 1000));
+   ```
+
+另一种先执行一次的节流函数
+
+```js
+function debounce(fn, waiting) {
+  let timeId = null;
+  let flag = true;
+  return function () {
+    clearTimeout(timeId);
+    timeId = setTimeout(() => {
+      fn.apply(this, arguments);
+      flag = true;
+    }, waiting);
+    if (flag) fn.apply(this, arguments);
+    flag = false;
+  };
+}
+function resizeCaller() {
+  console.log("resize");
+}
+window.addEventListener("resize", debounce(resizeCaller, 2000));
+```
+
+2. 节流：高频事件在 n 秒内只会执行一次，无论执行频率多高，等 n 秒后会再次执行
+
+   思路：每次触发事件时都根据节流阀判断是否可以执行
+
+```js
+function throttle(fn, waiting) {
+  let flag = true;
+  return function () {
+    if (flag) {
+      flag = false;
+      setTimeout(() => {
+        fn.apply(this, arguments);
+        flag = true;
+      }, waiting);
+    }
+  };
+}
+function resizeCaller() {
+  console.log("resize");
+}
+window.addEventListener("resize", throttle(resizeCaller, 1000));
+```
+
+另一种先执行一次的节流函数
+
+```js
+function throttle(fn, waiting) {
+  let preTime = +new Date();
+  return function () {
+    let now = +new Date();
+    if (now - preTime > waiting) {
+      fn.apply(this, arguments);
+      preTime = now;
+    }
+  };
+}
+function resizeCaller() {
+  console.log("resize");
+}
+window.addEventListener("resize", throttle(resizeCaller, 3000));
+```
 
 ## 继承
 
 ## promise
 
 ## 箭头函数
+
+```js
+```
