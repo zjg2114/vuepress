@@ -58,11 +58,54 @@ noc.skill(); // 魔腾的技能
 
 ### 原型链
 
-在 javascript 中，当我们访问对象的某个属性时，他会先在自身对象上寻找，如果不存在，那么就会往这个对象的构造函数的 prototype（假设是 Hero.prototype）上寻找，如果还是不存在，就会继续向着 Hero.prototype 的构造函数的 prototype 上寻找，这就形成了这次的主角原型链
+当调用某种方法或查找某种属性时，首先会在自身调用和查找，如果自身并没有该属性或方法，则会去它的__proto__属性中调用查找，这个__proto__指向了它的构造函数的prototype，这一寻找过程形成的查找链就是原型链。
 
-老规矩上图：
+老规矩上图(百度来的 选了一个比较清楚的)：
 
   ![原型链](../asserts/prototype.jpg)
+
+这里有两个比较特殊的地方：
+
+1. 构造函数Function的prototype和__proto__都指向Function.prototype(因为Function也是Function构造的 ^-^)
+2. Object.prototype最终指向null，也就是所有的原型链都是以null为终点
+
+### instanceof & constructor
+
+#### constructor
+
+在js中创建的每个函数都会有一个prototype（原型）对象，这个原型对象上会有一个constructor属性，这个属性默认情况下指向构造函数。
+
+  ![constructor](../asserts/constructor.jpg)
+
+但当我们将构造函数的prototype指向一个的新的对象时，constructor属性就不再指向Hero。
+因为会把构造函数默认的prototype被新对象覆盖，那么指向构造函数的constructor就不复存在。
+
+  ![constructor](../asserts/constructor2.jpg)
+
+如果我们对Hero.prototype重新赋值后希望constructor仍指向Hero的话，可以手动添加一个constructor属性让它指向Hero
+
+  ![constructor](../asserts/constructor4.jpg)
+
+虽然constructor重新指向Hero，但同时我们也发现constructor变成了可枚举属性，constructor属性默认是不可枚举的，即[[Enumerable]]的值为false
+
+  ![constructor](../asserts/constructor5.jpg)
+
+没事！困难总比办法多(:smirk: :smirk:)
+
+```js
+ Object.defineProperty(Hero.prototype, 'constructor', {
+   enumerable: false,
+   value: Hero
+ })
+```
+
+  ![constructor](../asserts/constructor6.jpg)
+
+#### instanceof
+
+instanceof 运算符用来测试一个对象在其原型链中是否存在一个构造函数的 prototype 属性
+instanceof不仅可以判断实例对象直接的构造函数，而且还能判断原型链上所有的构造函数，上面代码中Object在person的原型链中，所以返回true。
+可见Person.prototype对象被重写并不影响instanceof的判断，因为instanceof是根据原型链来判断构造函数的，只要对象实例的原型链不发生变化，instanceof便可以正确判断
 
 ## 作用域&闭包
 
