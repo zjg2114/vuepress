@@ -1,6 +1,68 @@
 # javascript
 
-## 原型链
+## 原型
+
+javascript 在设计继承机制的时候没有选择引入 class 类的概念（es6 引入了 class 关键字，本质还是构造函数的语法糖），主要是依靠 new 后面跟构造函数的方式来生成实例对象的。
+
+举个栗子
+
+```js
+function Hero(name) {
+  // this就指向了实例对象
+  this.name = name;
+}
+let timo = new Hero("提莫");
+console.log(timo.name); // 提莫
+```
+
+### new 操作符
+
+如何实现一个 new 操作符,首先知道 new 做了什么
+
+1. 首先创建一个空的对象，空对象的**proto**属性指向构造函数的原型对象,其实就是构造函数的 this 指向实例
+2. 把上面创建的空对象赋值构造函数内部的 this，用构造函数内部的方法修改空对象
+3. 如果构造函数返回一个非基本类型的值，则返回这个值，否则上面创建的对象
+
+```js
+// new的简单实现
+function _new(fn, ...arg) {
+  const obj = Object.create(fn.prototype);
+  const ret = fn.apply(obj, arg);
+  return ret instanceof Object ? ret : obj;
+}
+```
+
+::: tip
+用构造函数生成实例对象，有一个缺点，那就是无法共享属性和方法。
+:::
+
+### prototype
+
+于是 javascript 引入了 protrotype 属性，所有实例对象需要共享的属性和方法，都放在这个构造函数的 prototype 中。举个栗子：
+
+```js
+function Hero(name) {
+  // this就指向了实例对象
+  this.name = name;
+}
+Hero.prototype.skill = function () {
+  console.log(`${this.name}的技能`);
+};
+let timo = new Hero("提莫");
+let noc = new Hero("魔腾");
+timo.skill(); // 提莫的技能
+noc.skill(); // 魔腾的技能
+```
+
+把 skill 方法放在 hero 的原型对象上后，所有生成的实例都可以共享；当我修改 prototype 的属性时，也会影响所有的实例对象，达到了继承的目的
+
+### 原型链
+
+在 javascript 中，当我们访问对象的某个属性时，他会先在自身对象上寻找，如果不存在，那么就会往这个对象的构造函数的 prototype（假设是 Hero.prototype）上寻找，如果还是不存在，就会继续向着 Hero.prototype 的构造函数的 prototype 上寻找，这就形成了这次的主角原型链
+
+老规矩上图：
+
+  ![原型链](../asserts/prototype.jpg)
 
 ## 作用域&闭包
 
@@ -161,22 +223,6 @@ a[1](); // 1
   闭包很强大,用途之一是实现对象的私有数据。在 vue 中,对 data 数据做响应式时,就是把观察者对象存在了 get 的闭包函数中
   但是滥用闭包,会导致内存泄漏,也不是所有的闭包都会导致泄漏,只有上述说的'有意义'的闭包才会,可以通过将引用的函数变量名复制为 null 手动清除;
 
-## new 操作符
-
-如何实现一个 new 操作符,首先知道 new 做了什么
-
-1. 首先创建一个空的对象，空对象的**proto**属性指向构造函数的原型对象,其实就是构造函数的 this 指向实例
-2. 把上面创建的空对象赋值构造函数内部的 this，用构造函数内部的方法修改空对象
-3. 如果构造函数返回一个非基本类型的值，则返回这个值，否则上面创建的对象
-
-```js
-function _new(fn, ...arg) {
-  const obj = Object.create(fn.prototype);
-  const ret = fn.apply(obj, arg);
-  return ret instanceof Object ? ret : obj;
-}
-```
-
 ## 防抖&节流
 
 1. 防抖：控制高频事件触发次数，如果 n 秒内事件再次被触发，则重新计算时间
@@ -187,7 +233,6 @@ function _new(fn, ...arg) {
    function debounce(fn, waiting) {
      let timeId = null;
      return function () {
-       fn();
        clearTimeout(timeId);
        timeId = setTimeout(() => {
          fn.apply(this, arguments);
