@@ -16,7 +16,7 @@ module.exports = {
     ],
     sidebar: {
       '/code-analysis/vue-analysis/': ['', 'reactive','computed'],
-      '/basic-knowledge/': ['javascript', 'css','network'],
+      '/basic-knowledge/': ['javascript','es2015+', 'css','network'],
     }
   }
 };
