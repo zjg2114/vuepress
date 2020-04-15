@@ -351,12 +351,3 @@ function resizeCaller() {
 }
 window.addEventListener("resize", throttle(resizeCaller, 3000));
 ```
-
-## 继承
-
-## promise
-
-## 箭头函数
-
-```js
-```

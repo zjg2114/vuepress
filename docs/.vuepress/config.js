@@ -7,16 +7,18 @@ module.exports = {
       {
         text: '源码分析',
         items: [
-          { text: 'vue', link: '/code-analysis/vue-analysis/' },
+          { text: 'vue', link: '/code-analysis/vue-analysis/reactive' },
           { text: 'react', link: '/code-analysis/react-analysis/' }
         ]
       },
-      { text: '基础理论', link: '/basic-knowledge/' },
-      { text: '项目实践', link: '/project/' }
+      { text: '基础理论', link: '/basic-knowledge/javascript' },
+      // { text: '项目实践', link: '/project/' },
+      { text: '日常笔记', link: '/daily-record/io' }
     ],
     sidebar: {
-      '/code-analysis/vue-analysis/': ['', 'reactive','computed'],
+      '/code-analysis/vue-analysis/': ['reactive','computed'],
       '/basic-knowledge/': ['javascript','es2015+', 'css','network'],
+      '/daily-record/': ['io','el-cascader'],
     }
   }
 };
