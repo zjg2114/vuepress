@@ -1,8 +1,8 @@
 ---
 home: true
 heroImage: 
-actionText: 起步 →
-actionLink: /code-analysis/vue-analysis/
+actionText: start →
+actionLink: /code-analysis/vue-analysis/reactive
 features:
 - title: 源码分析
   details: 分析框架以及工具类库的源码
