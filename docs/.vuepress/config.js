@@ -2,7 +2,7 @@ module.exports = {
   title: "joe's blog",
   description: '周俊贵个人博客',
   head: [
-    ['link', { rel: 'icon', href: './../asserts/favicon.jpg' }]
+    ['link', { rel: 'icon', href: '/asserts/favicon.jpg' }]
   ],
   themeConfig: {
     nav: [
@@ -21,7 +21,7 @@ module.exports = {
     sidebar: {
       '/code-analysis/vue-analysis/': ['reactive','computed'],
       '/basic-knowledge/': ['javascript','es2015+', 'css','network'],
-      '/daily-record/': ['io','el-cascader'],
+      '/daily-record/': ['io','el-cascader','npm'],
     }
   }
 };
