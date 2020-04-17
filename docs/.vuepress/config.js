@@ -2,7 +2,7 @@ module.exports = {
   title: "joe's blog",
   description: '周俊贵个人博客',
   head: [
-    ['link', { rel: 'icon', href: '/asserts/favicon.jpg' }]
+    ['link', { rel: 'icon', href: `/favicon.ico` }]
   ],
   themeConfig: {
     nav: [
