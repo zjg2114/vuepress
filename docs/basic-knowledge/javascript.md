@@ -45,7 +45,7 @@ function Hero(name) {
   // this就指向了实例对象
   this.name = name;
 }
-Hero.prototype.skill = function () {
+Hero.prototype.skill = function() {
   console.log(`${this.name}的技能`);
 };
 let timo = new Hero("提莫");
@@ -58,54 +58,54 @@ noc.skill(); // 魔腾的技能
 
 ### 原型链
 
-当调用某种方法或查找某种属性时，首先会在自身调用和查找，如果自身并没有该属性或方法，则会去它的__proto__属性中调用查找，这个__proto__指向了它的构造函数的prototype，这一寻找过程形成的查找链就是原型链。
+当调用某种方法或查找某种属性时，首先会在自身调用和查找，如果自身并没有该属性或方法，则会去它的**proto**属性中调用查找，这个**proto**指向了它的构造函数的 prototype，这一寻找过程形成的查找链就是原型链。
 
 老规矩上图(百度来的 选了一个比较清楚的)：
 
-  ![原型链](../asserts/prototype.jpg)
+![原型链](../asserts/prototype.jpg)
 
 这里有两个比较特殊的地方：
 
-1. 构造函数Function的prototype和__proto__都指向Function.prototype(因为Function也是Function构造的 ^-^)
-2. Object.prototype最终指向null，也就是所有的原型链都是以null为终点
+1. 构造函数 Function 的 prototype 和**proto**都指向 Function.prototype(因为 Function 也是 Function 构造的 ^-^)
+2. Object.prototype 最终指向 null，也就是所有的原型链都是以 null 为终点
 
 ### instanceof & constructor
 
 #### constructor
 
-在js中创建的每个函数都会有一个prototype（原型）对象，这个原型对象上会有一个constructor属性，这个属性默认情况下指向构造函数。
+在 js 中创建的每个函数都会有一个 prototype（原型）对象，这个原型对象上会有一个 constructor 属性，这个属性默认情况下指向构造函数。
 
-  ![constructor](../asserts/constructor.jpg)
+![constructor](../asserts/constructor.jpg)
 
-但当我们将构造函数的prototype指向一个的新的对象时，constructor属性就不再指向Hero。
-因为会把构造函数默认的prototype被新对象覆盖，那么指向构造函数的constructor就不复存在。
+但当我们将构造函数的 prototype 指向一个的新的对象时，constructor 属性就不再指向 Hero。
+因为会把构造函数默认的 prototype 被新对象覆盖，那么指向构造函数的 constructor 就不复存在。
 
-  ![constructor](../asserts/constructor2.jpg)
+![constructor](../asserts/constructor2.jpg)
 
-如果我们对Hero.prototype重新赋值后希望constructor仍指向Hero的话，可以手动添加一个constructor属性让它指向Hero
+如果我们对 Hero.prototype 重新赋值后希望 constructor 仍指向 Hero 的话，可以手动添加一个 constructor 属性让它指向 Hero
 
-  ![constructor](../asserts/constructor4.jpg)
+![constructor](../asserts/constructor4.jpg)
 
-虽然constructor重新指向Hero，但同时我们也发现constructor变成了可枚举属性，constructor属性默认是不可枚举的，即[[Enumerable]]的值为false
+虽然 constructor 重新指向 Hero，但同时我们也发现 constructor 变成了可枚举属性，constructor 属性默认是不可枚举的，即[[Enumerable]]的值为 false
 
-  ![constructor](../asserts/constructor5.jpg)
+![constructor](../asserts/constructor5.jpg)
 
 没事！困难总比办法多(:smirk: :smirk:)
 
 ```js
- Object.defineProperty(Hero.prototype, 'constructor', {
-   enumerable: false,
-   value: Hero
- })
+Object.defineProperty(Hero.prototype, "constructor", {
+  enumerable: false,
+  value: Hero,
+});
 ```
 
-  ![constructor](../asserts/constructor6.jpg)
+![constructor](../asserts/constructor6.jpg)
 
 #### instanceof
 
 instanceof 运算符用来测试一个对象在其原型链中是否存在一个构造函数的 prototype 属性
-instanceof不仅可以判断实例对象直接的构造函数，而且还能判断原型链上所有的构造函数，上面代码中Object在person的原型链中，所以返回true。
-可见Person.prototype对象被重写并不影响instanceof的判断，因为instanceof是根据原型链来判断构造函数的，只要对象实例的原型链不发生变化，instanceof便可以正确判断
+instanceof 不仅可以判断实例对象直接的构造函数，而且还能判断原型链上所有的构造函数，上面代码中 Object 在 person 的原型链中，所以返回 true。
+可见 Person.prototype 对象被重写并不影响 instanceof 的判断，因为 instanceof 是根据原型链来判断构造函数的，只要对象实例的原型链不发生变化，instanceof 便可以正确判断
 
 ## 作用域&闭包
 
@@ -165,7 +165,7 @@ console.log(a); // 123
 ```js
 var a = [];
 for (var i = 0; i < 10; i++) {
-  a[i] = function () {
+  a[i] = function() {
     console.log(i);
   };
 }
@@ -179,8 +179,8 @@ a[1](); // 10
 ```js
 var a = [];
 for (var i = 0; i < 10; i++) {
-  (function (i) {
-    a[i] = function () {
+  (function(i) {
+    a[i] = function() {
       console.log(i);
     };
   })(i);
@@ -202,7 +202,7 @@ let const 将变量的作用域限制在当前代码块中。块级作用域有�
 ```js
 var a = [];
 for (let i = 0; i < 10; i++) {
-  a[i] = function () {
+  a[i] = function() {
     console.log(i);
   };
 }
@@ -266,6 +266,25 @@ a[1](); // 1
   闭包很强大,用途之一是实现对象的私有数据。在 vue 中,对 data 数据做响应式时,就是把观察者对象存在了 get 的闭包函数中
   但是滥用闭包,会导致内存泄漏,也不是所有的闭包都会导致泄漏,只有上述说的'有意义'的闭包才会,可以通过将引用的函数变量名复制为 null 手动清除;
 
+## JS 的单线程
+
+作为浏览器的脚本语言，JavaScript 在设计之初就是单线程,为什么不是多线程提高效率呢？
+
+举个栗子：假定 JavaScript 同时有两个线程，一个线程在某个 DOM 节点上添加内容，另一个线程删除了这个节点，那么就会浏览器根据那条线程判断呢？
+为了避免复杂性，js 就被设计成了单线程（之后浏览器为了利用多核 CPU 的计算能力，HTML5 提出 Web Worker 标准，允许 JavaScript 脚本创建多个线程，但是子线程完全受主线程控制，且不得操作 DOM。所以并没有改变 JavaScript 引擎单线程的本质）。
+
+浏览器耗时任务开辟了另外的线程：
+
+- 渲染引擎线程：顾名思义，该线程负责页面的渲染
+- JS 引擎线程：负责 JS 的解析和执行
+- 定时触发器线程：处理定时事件，比如 setTimeout, setInterval
+- 事件触发线程：处理 DOM 事件（click）
+- 异步 http 请求线程：处理 http 请求
+
+虽然JavaScript是单线程的，可是浏览器内部不是单线程的。一些I/O操作、定时器的计时和事件监听等都是由浏览器提供的其他线程来完成的。这些线程都会排列在主线程之外的任务队列，等待被执行，这就是异步的概念。
+
+
+
 ## 防抖&节流
 
 1. 防抖：控制高频事件触发次数，如果 n 秒内事件再次被触发，则重新计算时间
@@ -275,7 +294,7 @@ a[1](); // 1
    ```js
    function debounce(fn, waiting) {
      let timeId = null;
-     return function () {
+     return function() {
        clearTimeout(timeId);
        timeId = setTimeout(() => {
          fn.apply(this, arguments);
@@ -294,7 +313,7 @@ a[1](); // 1
 function debounce(fn, waiting) {
   let timeId = null;
   let flag = true;
-  return function () {
+  return function() {
     clearTimeout(timeId);
     timeId = setTimeout(() => {
       fn.apply(this, arguments);
@@ -317,7 +336,7 @@ window.addEventListener("resize", debounce(resizeCaller, 2000));
 ```js
 function throttle(fn, waiting) {
   let flag = true;
-  return function () {
+  return function() {
     if (flag) {
       flag = false;
       setTimeout(() => {
@@ -338,7 +357,7 @@ window.addEventListener("resize", throttle(resizeCaller, 1000));
 ```js
 function throttle(fn, waiting) {
   let preTime = +new Date();
-  return function () {
+  return function() {
     let now = +new Date();
     if (now - preTime > waiting) {
       fn.apply(this, arguments);
