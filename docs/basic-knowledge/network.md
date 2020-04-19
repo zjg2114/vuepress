@@ -251,7 +251,7 @@ HTTP 是明文传输的协议，传输的数据会对外界暴露不安全，会
 
 强缓存不会向服务器发送请求，而是直接从缓存中读取资源，在控制台的 Network 选项中可以看到该请求返回 200 的状态码，并且 Size 显示 from disk cache 或 from memory cache。强缓存可以通过设置两种 HTTP Header 实现：Expires 和 Cache-Control。
 
-![cache](../asserts/cache2.jpg)
+![cache](../asserts/cache2.png)
 
 #### Expires
 
@@ -265,7 +265,7 @@ Expires: Wed, 1 Apr 2020 08:00:00 GMT
 
 Cache-Control 通过请求头或者响应头中设置不同属性来设置缓存条件：
 
-![cache-control](../asserts/cache3.jpg)
+![cache-control](../asserts/cache3.png)
 
 - public和private的区别在于代理服务器是否可以缓存资源
 
@@ -287,7 +287,7 @@ Cache-Control优先级高于Expires，另外强缓存并不会关心服务器端
 
 浏览器在第一次访问资源时，服务器返回资源的同时，在响应头中添加 Last-Modified和ETag，这两者就是提到的缓存标识
 
-![cache-control](../asserts/cache4.jpg)
+![cache-control](../asserts/cache4.png)
 
 #### Last-Modified
 
