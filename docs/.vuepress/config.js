@@ -21,7 +21,7 @@ module.exports = {
     sidebar: {
       '/code-analysis/vue-analysis/': ['reactive','computed'],
       '/basic-knowledge/': ['javascript','es2015+', 'css','network'],
-      '/daily-record/': ['io','el-cascader','npm'],
+      '/daily-record/': ['io','el-cascader','npm','mysql日期时间类型'],
     }
   },
   configureWebpack: {

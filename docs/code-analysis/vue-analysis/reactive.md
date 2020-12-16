@@ -1,8 +1,8 @@
 # Vue 的响应式原理
 
 > vue 的核心思想就是数据驱动,不会频繁的操作 DOM,而是利用了 virtual DOM(虚拟 DOM)
-jquery 的我用的时间不久(半年左右),和 vue 相比,由于 jq 的对 dom 的频繁操作,代码比 vue 的复杂度高很多
-vue 的开发者不要要关心视图层,只需要操作数据就完事了
+由于 jq 的对 dom 的频繁操作,代码比 vue 的复杂度高很多
+vue 的开发者不要要关心视图层,只需要操作数据就vans了
 
 ## vue 初始化 data
 
@@ -402,4 +402,4 @@ export function popTarget() {
 
 1. 维护 subs,添加 watcher,删除 watcher
 2. 维护一个 targetStack,不同阶段将不同的 watcher 赋值给 Dep.target
-3. notify 通知 watcher 执行 update(),页面刷新,中间过程还没了解,有空再写
+3. notify 通知 watcher 执行 update(),页面刷新
