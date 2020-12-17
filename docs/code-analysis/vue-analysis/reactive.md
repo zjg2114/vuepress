@@ -1,73 +1,78 @@
 # Vue 的响应式原理
 
 > vue 的核心思想就是数据驱动,不会频繁的操作 DOM,而是利用了 virtual DOM(虚拟 DOM)
-由于 jq 的对 dom 的频繁操作,代码比 vue 的复杂度高很多
-vue 的开发者不要要关心视图层,只需要操作数据就vans了
+> 由于 jq 的对 dom 的频繁操作,代码比 vue 的复杂度高很多
+> vue 的开发者不要要关心视图层,只需要操作数据就 vans 了
 
 ## vue 初始化 data
 
 1. vue 初始化阶段会调用\_init 方法,其中会有 initState()对 data 做处理
 
-    ```js
-    function initState(vm) {
-    var opts = vm.$options;
-    // 其中还有 props，computed，watch 等选项处理
-    if (opts.data) {
-        initData(vm);
-    }
-    }
-    ```
+```js
+function initState(vm) {
+  var opts = vm.$options;
+  // 其中还有 props，computed，watch 等选项处理
+  if (opts.data) {
+    initData(vm);
+  }
+}
+```
 
 2. observe 函数生成 Observe 实例根据 data 类型做不同处理
 
-    ```js
-    function initData(vm) {
-        // data就是我们在vue文件中定义的data
-        var data = vm.$options.data;
-        // 判断data是否是函数(为什么每个vue实例的data需要是个函数)
-        data = typeof data === "function" ? data.call(vm, vm) : data || {};
-        // ... 遍历 data 数据对象的key，重名检测，合规检测等代码
-        observe(data, true /* asRootData */);
-        }
-        // 这边可以不关心observe 知道是来对data做劫持的就行了
-        function observe(value) {
-        if (!isObject(value) || value instanceof VNode) {
-            return;
-        }
-        ob = new Observer(value);
-        return ob;
-        }
-        // 这里也可以不关心这个类,下面会说的(主要是对数组和对象的处理)
-        export class Observer {
-        value: any;
-        dep: Dep;
-        // 往data中添加__ob__
-        def(value, '__ob__', this)
-        constructor(value: any) {
-            this.value = value;
-            this.dep = new Dep();
-            if (Array.isArray(value)) {
-            this.observeArray(value);
-            } else {
-            this.walk(value);
-            }
-        }
-        // 如果是Object
-        walk(obj: Object) {
-            const keys = Object.keys(obj);
-            for (let i = 0; i < keys.length; i++) {
-            // 遍历对象的数据做劫持
-            defineReactive(obj, keys[i]);
-            }
-        }
-        // 如果是Array
-        observeArray(items: Array<any>) {
-            for (let i = 0, l = items.length; i < l; i++) {
-            observe(items[i]);
-            }
-        }
-        }
-    ```
+```js
+function initData(vm) {
+  // data就是我们在vue文件中定义的data
+  var data = vm.$options.data;
+  // 判断data是否是函数(为什么每个vue实例的data需要是个函数)
+  data = typeof data === "function" ? data.call(vm, vm) : data || {};
+  // ... 遍历 data 数据对象的key，重名检测，合规检测等代码
+  observe(data, true /* asRootData */);
+}
+    // 这边可以不关心observe 知道是来对data做劫持的就行了
+function observe(value) {
+  if (!isObject(value) || value instanceof VNode) {
+    return;
+  }
+   let ob: Observer | void
+  if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
+    ob = value.__ob__
+  }else if{
+    ob = new Observer(value);
+  }
+  return ob;
+}
+    // 这里也可以不关心这个类,下面会说的(主要是对数组和对象的处理)
+export class Observer {
+  value: any;
+  dep: Dep;
+  // 往data中添加__ob__
+  constructor(value: any) {
+    this.value = value;
+    this.dep = new Dep();
+    def(value, '__ob__', this)
+    if (Array.isArray(value)) {
+      this.observeArray(value);
+    } else {
+      this.walk(value);
+    }
+  }
+    // 如果是Object
+    walk(obj: Object) {
+      const keys = Object.keys(obj);
+      for (let i = 0; i < keys.length; i++) {
+      // 遍历对象的数据做劫持
+      defineReactive(obj, keys[i]);
+      }
+    }
+    // 如果是Array
+    observeArray(items: Array<any>) {
+      for (let i = 0, l = items.length; i < l; i++) {
+        observe(items[i]);
+      }
+    }
+}
+```
 
 3. defineReactive 对 data 中的数据进行劫持(精髓:Object.defineProperty)
 
@@ -84,7 +89,7 @@ function defineReactive(obj, key) {
     },
     set() {
       //精髓代码 下面会说
-    }
+    },
   });
 }
 ```
@@ -103,7 +108,7 @@ function defineReactive(obj, key) {
 
 ```js
 with (this) {
-  return _c('div', {}, [message]);
+  return _c("div", {}, [message]);
 }
 ```
 
@@ -122,7 +127,7 @@ function defineReactive(obj, key) {
         dep.addSub(Dep.target);
       }
       return val;
-    }
+    },
   });
 }
 ```
@@ -155,11 +160,11 @@ Dep.prototype.addSub = function(sub) {
 > 引用数据的响应式
 
 当 data 是对象时,会通过 walk 来遍历对象,一层一层的 defineReactive 做劫持,
-我在 data 中定义了一个对象,在控制台打印,可以发现其中有一个**ob**的属性
+我在 data 中定义了一个对象,在控制台打印,可以发现其中有一个\_\_ob\_\_的属性
 
-![_ob_](https://github.com/zjg2114/Daily-code-exercises/blob/master/vue%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/asserts/__ob__.png?raw=true)
+![_ob_](../../asserts/__ob__.png)
 
-**ob** 有一个 dep 属性，这个 dep 是不是有点熟悉，是的，在上面讲过 dep 正是存储依赖的地方
+\_\_ob\_\_ 有一个 dep 属性，这个 dep 是不是有点熟悉，是的，在上面讲过 dep 正是存储依赖的地方
 这个 ob 是怎么来的呢 上面的源码我们再拿来看一下
 
 ```js
@@ -177,6 +182,7 @@ export class Observer {
   constructor(value: any) {
     this.value = value;
     this.dep = new Dep();
+    def(value, "__ob__", this);
     if (Array.isArray(value)) {
       this.observeArray(value);
     } else {
@@ -201,32 +207,32 @@ export class Observer {
 ```
 
 再来看这个源码 可以知道 ob 就是 Observe 生成的实例
-为什么需要**ob**.dep 来存储依赖?
-因为闭包 dep 只存在 defineReactive 中，其他地方访问不到,那么哪些地方需要这个**ob**.dep 呢?
+为什么需要\_\_ob\_\_.dep 来存储依赖?
+因为闭包 dep 只存在 defineReactive 中，其他地方访问不到,那么哪些地方需要这个\*\*ob\*\*.dep 呢?
 
 做过 vue 项目的应该都会用到过 this.$set或者this.$del 方法吧,
 当我们给某个对象添加响应式的属性的时候会用到,那么他们内部怎么实现的呢
 
 ```js
-export function set (target, key, val){
+export function set(target, key, val) {
   if (Array.isArray(target) && isValidArrayIndex(key)) {
-    target.length = Math.max(target.length, key)
-    target.splice(key, 1, val)
-    return val
+    target.length = Math.max(target.length, key);
+    target.splice(key, 1, val);
+    return val;
   }
   if (key in target && !(key in Object.prototype)) {
-    target[key] = val
-    return val
+    target[key] = val;
+    return val;
   }
   // 这里就是ob起作用的地方了
-  const ob = target.__ob__
+  const ob = target.__ob__;
   if (!ob) {
-    target[key] = val
-    return val
+    target[key] = val;
+    return val;
   }
-  defineReactive(ob.value, key, val)
-  ob.dep.notify()
-  return val
+  defineReactive(ob.value, key, val);
+  ob.dep.notify();
+  return val;
 }
 ```
 
@@ -243,7 +249,7 @@ export function set (target, key, val){
   }
 ```
 
-数组中也会有**ob**属性,那么数组中的 ob 又在什么地方用到了呢
+数组中也会有\_\_ob\_\_属性,那么数组中的 ob 又在什么地方用到了呢
 其实 vue 对数组的变异方法做了一层自己的封装(变异方法就是会修改原数组的方法比如:push)
 
 ```js
@@ -251,13 +257,13 @@ const arrayProto = Array.prototype;
 export const arrayMethods = Object.create(arrayProto);
 
 const methodsToPatch = [
-  'push',
-  'pop',
-  'shift',
-  'unshift',
-  'splice',
-  'sort',
-  'reverse'
+  "push",
+  "pop",
+  "shift",
+  "unshift",
+  "splice",
+  "sort",
+  "reverse",
 ];
 
 methodsToPatch.forEach(function(method) {
@@ -307,14 +313,15 @@ export function defineReactive(
     },
     set: function reactiveSetter(newVal) {
       // 往后再说
-    }
+    },
   });
 }
 ```
 
 1. dep 说过了,就是主要用于存放 watcher 的
 2. childOb 是 observe(val)的返回值,当 val 是个基本数据类型时,返回 undefined,否则会不断递归遍历
-   在 get 中会判断 childOb 不是基本数据类型时,childOb.dep.depend(),就是 ob 中的 dep 也会收集依赖 3.当 data 是个数组时会调用 dependArray,目的还是遍历,如果 item 项是对象,那么在 ob.dep 中添加依赖,数组就递归处理
+   在 get 中会判断 childOb 不是基本数据类型时,childOb.dep.depend(),就是 ob 中的 dep 也会收集依赖
+3. 当 data 是个数组时会调用 dependArray,目的还是遍历,如果 item 项是对象,那么在 ob.dep 中添加依赖,数组就递归处理
 
 ```js
 function dependArray(value: Array<any>) {
