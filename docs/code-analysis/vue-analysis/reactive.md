@@ -1,24 +1,23 @@
 # Vue 的响应式原理
 
-> vue 的核心思想就是数据驱动,不会频繁的操作 DOM,而是利用了 virtual DOM(虚拟 DOM)
-> 由于 jq 的对 dom 的频繁操作,代码比 vue 的复杂度高很多
-> vue 的开发者不要要关心视图层,只需要操作数据就 vans 了
+> Vue 的核心思想就是数据驱动，当开发者修改了响应式的数据,vue内部会帮我们更新视图
+> Vue.js 实现响应式的核心是利用了Object.defineProperty，IE8 及以下浏览器不能兼容的原因就是不支持这个api。
 
-## vue 初始化 data
+## 响应式数据
 
-1. vue 初始化阶段会调用\_init 方法,其中会有 initState()对 data 做处理
+- vue 初始化阶段会调用\_init 方法,其中会有 initState对 data，props，computed，watch 做处理
 
-```js
-function initState(vm) {
-  var opts = vm.$options;
-  // 其中还有 props，computed，watch 等选项处理
-  if (opts.data) {
-    initData(vm);
+  ```js
+  function initState(vm) {
+    var opts = vm.$options;
+    // 其中还有 props，computed，watch 等选项处理
+    if (opts.data) {
+      initData(vm);
+    }
   }
-}
-```
+  ```
 
-2. observe 函数生成 Observe 实例根据 data 类型做不同处理
+- initData主要对data进行初始化操作，最后通过observe来监测数据的变化
 
 ```js
 function initData(vm) {
@@ -26,10 +25,39 @@ function initData(vm) {
   var data = vm.$options.data;
   // 判断data是否是函数(为什么每个vue实例的data需要是个函数)
   data = typeof data === "function" ? data.call(vm, vm) : data || {};
-  // ... 遍历 data 数据对象的key，重名检测，合规检测等代码
+  // ... 遍历 data 数据对象的key，重名检测，合规检测，访问代理等代码
+  const keys = Object.keys(data)
+  const props = vm.$options.props
+  const methods = vm.$options.methods
+  let i = keys.length
+  while (i--) {
+    const key = keys[i]
+    if (process.env.NODE_ENV !== 'production') {
+      if (methods && hasOwn(methods, key)) {
+        warn(
+          `Method "${key}" has already been defined as a data property.`,
+          vm
+        )
+      }
+    }
+    if (props && hasOwn(props, key)) {
+      process.env.NODE_ENV !== 'production' && warn(
+        `The data property "${key}" is already declared as a prop. ` +
+        `Use prop default value instead.`,
+        vm
+      )
+      // 保留字符
+    } else if (!isReserved(key)) {
+      proxy(vm, `_data`, key)
+    }
+  }
   observe(data, true /* asRootData */);
 }
-    // 这边可以不关心observe 知道是来对data做劫持的就行了
+```
+
+- observe 方法的作用就是给非 VNode 的对象类型数据添加一个 Observer，如果已经添加过则直接返回，否则实例化一个 Observer 对象实例。
+
+```js
 function observe(value) {
   if (!isObject(value) || value instanceof VNode) {
     return;
@@ -42,7 +70,11 @@ function observe(value) {
   }
   return ob;
 }
-    // 这里也可以不关心这个类,下面会说的(主要是对数组和对象的处理)
+```
+
+- Observer 是一个类，它的作用是给对象的属性添加 getter 和 setter，用于依赖收集和派发更新
+
+```js
 export class Observer {
   value: any;
   dep: Dep;
@@ -74,27 +106,64 @@ export class Observer {
 }
 ```
 
-3. defineReactive 对 data 中的数据进行劫持(精髓:Object.defineProperty)
+- Observer 的构造函数的逻辑主要是：实例化 Dep 对象(管理Watcher)，接着通过执行 def 函数把自身实例添加到数据对象 value 的 __ob__ 属性上，然后对 value 做判断，对于数组会调用 observeArray 遍历数组循环调用observe方法，如果是对象则调用 walk 方法。最终都会执行 defineReactive 方法。
+
+- defineReactive 的核心就是利用 Object.defineProperty 给数据添加了 getter 和 setter，目的就是为了在我们访问数据以及写数据的时候能自动执行一些逻辑：getter 做的事情是依赖收集，setter 做的事情是派发更新，接下来我们就重点对这两个过程分析。
 
 ```js
-function defineReactive(obj, key) {
+function defineReactive(
+  obj: Object,
+  key: string,
+  val: any,
+  customSetter?: ?Function,
+  shallow?: boolean) 
+{
   // dep 用于中收集所有依赖
-  var dep = new Dep();
-  var val = obj[key];
+  const dep = new Dep();
+  const property = Object.getOwnPropertyDescriptor(obj, key)
+  if (property && property.configurable === false) {
+    return
+  }
+    // cater for pre-defined getter/setters
+  const getter = property && property.get
+  const setter = property && property.set
+  if ((!getter || setter) && arguments.length === 2) {
+    val = obj[key]
+  }
+  //shallow 只做浅层响应式
+  let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
-    enumerable: true,
-    configurable: true,
-    get() {
-      //精髓代码 下面会说
-    },
-    set() {
-      //精髓代码 下面会说
-    },
-  });
+      enumerable: true,
+      configurable: true,
+      get: function reactiveGetter () {
+        const value = getter ? getter.call(obj) : val
+        if (Dep.target) {
+          dep.depend()
+          if (childOb) {
+            childOb.dep.depend()
+            if (Array.isArray(value)) {
+              dependArray(value)
+            }
+          }
+        }
+        return value
+      },
+      set: function reactiveSetter (newVal) {
+        const value = getter ? getter.call(obj) : val
+        if (newVal === value || (newVal !== newVal && value !== value)) {
+          return
+        }
+        if (setter) {
+          setter.call(obj, newVal)
+        } else {
+          val = newVal
+        }
+        childOb = !shallow && observe(newVal)
+        dep.notify()
+      }
+    })
 }
 ```
-
-> 响应式原理分为依赖收集和依赖更新
 
 ## 依赖收集过程
 
@@ -113,100 +182,253 @@ with (this) {
 ```
 
 执行渲染函数，通过 with 讲上下文对象绑定为实例,读取 message 的时候就是访问当前实例的 message;
-于是就会触发前面 defineproperty 中的 get 方法
+于是就会触发前面 defineproperty 中的 get 方法，回顾一下get方法：
 
 ```js
-// 这里的defineReactive函数是针对基础数据类型的,对于数组和对象有额外的处理
-function defineReactive(obj, key) {
-  var dep = new Dep();
-  var val = obj[key];
+export function defineReactive (
+  obj: Object,
+  key: string,
+  val: any,
+  customSetter?: ?Function,
+  shallow?: boolean
+) {
+  const dep = new Dep()
+
+  const property = Object.getOwnPropertyDescriptor(obj, key)
+  if (property && property.configurable === false) {
+    return
+  }
+
+  // cater for pre-defined getter/setters
+  const getter = property && property.get
+  const setter = property && property.set
+  if ((!getter || setter) && arguments.length === 2) {
+    val = obj[key]
+  }
+
+  let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
-    get() {
+    enumerable: true,
+    configurable: true,
+    get: function reactiveGetter () {
+      const value = getter ? getter.call(obj) : val
       if (Dep.target) {
-        // 收集依赖
-        dep.addSub(Dep.target);
+        dep.depend()
+        if (childOb) {
+          childOb.dep.depend()
+          if (Array.isArray(value)) {
+            dependArray(value)
+          }
+        }
       }
-      return val;
+      return value
     },
-  });
+    // ...
+  })
 }
 ```
 
-> Dep.target 简单介绍
+- defineReactive()方法中new一个 Dep 的实例，当Dep.target存在时通过dep.depend()收集了依赖；接下来我们看构造函数 Dep
+
+<!-- > Dep.target 简单介绍
 
 1. Dep.target 指向的是各种 watcher(页面渲染 watcher,computed,watch 等等)
 2. Dep.target 会根据当前解析流程，不停地指向不同的 watcher
    举个栗子:比如当前页面开始渲染时，Dep.target 会提前指向当前页面的 watcher。
    于是页面渲染函数执行，并引用了数据 message 后，message 收集到了 Dep.target，就会收集到当前页面的 watcher
-   数据变化时通知相应的 watcher，就可以调用 watcher 去派发更新
-
-> 构造函数 Dep
+   数据变化时通知相应的 watcher，就可以调用 watcher 去派发更新 -->
 
 ```js
-var Dep = function Dep() {
-  // 保存watcher 的数组(举个栗子:当message被watch监听并且被页面使用的话,subs中会有watch和页面渲染的两个watcher)
-  this.subs = [];
-};
-// addSub是原型上的方法，作用是往 dep.subs 存储器中 中直接添加 watcher
-Dep.prototype.addSub = function(sub) {
-  this.subs.push(sub);
-};
+export default class Dep {
+  static target: ?Watcher;
+  id: number;
+  subs: Array<Watcher>;
+
+  constructor () {
+    // subs中存放watcher(s)
+    this.subs = []
+  }
+
+  addSub (sub: Watcher) {
+    this.subs.push(sub)
+  }
+
+  removeSub (sub: Watcher) {
+    remove(this.subs, sub)
+  }
+
+  depend () {
+    if (Dep.target) {
+      Dep.target.addDep(this)
+    }
+  }
+
+  notify () {
+    // stabilize the subscriber list first
+    const subs = this.subs.slice()
+    for (let i = 0, l = subs.length; i < l; i++) {
+      subs[i].update()
+    }
+  }
+}
+// target作为静态属性指向一个全局唯一 Watcher
+Dep.target = null
+// 维护一个target栈 用于取出或者恢复watcher
+const targetStack = []
+
+export function pushTarget (_target: ?Watcher) {
+  if (Dep.target) targetStack.push(Dep.target)
+  Dep.target = _target
+}
+
+export function popTarget () {
+  Dep.target = targetStack.pop()
+}
 ```
 
-基本数据类型的依赖收集在闭包 dep 中,至此基本数据的依赖收集就完成了,接下来就是引用数据类型了
-
-对于引用数据主要分为两种:Array 和 Object,我们一个一个来分析
-
-> 引用数据的响应式
-
-当 data 是对象时,会通过 walk 来遍历对象,一层一层的 defineReactive 做劫持,
-我在 data 中定义了一个对象,在控制台打印,可以发现其中有一个\_\_ob\_\_的属性
+我们打印一个data中的对象直观的看一下：
 
 ![_ob_](../../asserts/__ob__.png)
 
-\_\_ob\_\_ 有一个 dep 属性，这个 dep 是不是有点熟悉，是的，在上面讲过 dep 正是存储依赖的地方
-这个 ob 是怎么来的呢 上面的源码我们再拿来看一下
+\_\_ob\_\_ 有一个 dep 属性，在上面讲过 dep 正是来管理watchers的
+
+watcher 顾名思义就是监听者，我们看一下他是如何实现的
 
 ```js
-function observe(value) {
-  if (!isObject(value) || value instanceof VNode) {
-    return;
-  }
-  // 可以看到ob就是Observer生成的实例
-  ob = new Observer(value);
-  return ob;
-}
-export class Observer {
-  value: any;
+let uid = 0
+export default class Watcher {
+  vm: Component;
+  expression: string;
+  cb: Function;
+  id: number;
+  deep: boolean;
+  user: boolean;
+  computed: boolean;
+  sync: boolean;
+  dirty: boolean;
+  active: boolean;
   dep: Dep;
-  constructor(value: any) {
-    this.value = value;
-    this.dep = new Dep();
-    def(value, "__ob__", this);
-    if (Array.isArray(value)) {
-      this.observeArray(value);
+  deps: Array<Dep>;
+  newDeps: Array<Dep>;
+  depIds: SimpleSet;
+  newDepIds: SimpleSet;
+  before: ?Function;
+  getter: Function;
+  value: any;
+
+  constructor (
+    vm: Component,
+    expOrFn: string | Function,
+    cb: Function,
+    options?: ?Object,
+    isRenderWatcher?: boolean
+  ) {
+    this.vm = vm
+    if (isRenderWatcher) {
+      vm._watcher = this
+    }
+    vm._watchers.push(this)
+    // options
+    if (options) {
+      this.deep = !!options.deep
+      this.user = !!options.user
+      this.computed = !!options.computed
+      this.sync = !!options.sync
+      this.before = options.before
     } else {
-      this.walk(value);
+      this.deep = this.user = this.computed = this.sync = false
+    }
+    this.cb = cb
+    this.id = ++uid // uid for batching
+    this.active = true
+    this.dirty = this.computed // for computed watchers
+    this.deps = []
+    this.newDeps = []
+    this.depIds = new Set()
+    this.newDepIds = new Set()
+    this.expression = process.env.NODE_ENV !== 'production'
+      ? expOrFn.toString()
+      : ''
+    // parse expression for getter
+    if (typeof expOrFn === 'function') {
+      this.getter = expOrFn
+    }
+    if (this.computed) {
+      this.value = undefined
+      this.dep = new Dep()
+    } else {
+      this.value = this.get()
     }
   }
-  // 如果是Object
-  walk(obj: Object) {
-    const keys = Object.keys(obj);
-    for (let i = 0; i < keys.length; i++) {
-      // 遍历对象的数据做劫持
-      defineReactive(obj, keys[i]);
+
+  /**
+   * Evaluate the getter, and re-collect dependencies.
+   */
+  get () {
+    pushTarget(this)
+    let value
+    const vm = this.vm
+    try {
+      value = this.getter.call(vm, vm)
+    } catch (e) {
+      if (this.user) {
+        handleError(e, vm, `getter for watcher "${this.expression}"`)
+      } else {
+        throw e
+      }
+    } finally {
+      // "touch" every property so they are all tracked as
+      // dependencies for deep watching
+      if (this.deep) {
+        traverse(value)
+      }
+      popTarget()
+      this.cleanupDeps()
+    }
+    return value
+  }
+
+  /**
+   * Add a dependency to this directive.
+   */
+  addDep (dep: Dep) {
+    const id = dep.id
+    if (!this.newDepIds.has(id)) {
+      this.newDepIds.add(id)
+      this.newDeps.push(dep)
+      if (!this.depIds.has(id)) {
+        dep.addSub(this)
+      }
     }
   }
-  // 如果是Array
-  observeArray(items: Array<any>) {
-    for (let i = 0, l = items.length; i < l; i++) {
-      observe(items[i]);
+
+  /**
+   * Clean up for dependency collection.
+   */
+  cleanupDeps () {
+    let i = this.deps.length
+    while (i--) {
+      const dep = this.deps[i]
+      if (!this.newDepIds.has(dep.id)) {
+        dep.removeSub(this)
+      }
     }
+    let tmp = this.depIds
+    this.depIds = this.newDepIds
+    this.newDepIds = tmp
+    this.newDepIds.clear()
+    tmp = this.deps
+    this.deps = this.newDeps
+    this.newDeps = tmp
+    this.newDeps.length = 0
   }
+  // ...
 }
 ```
 
-再来看这个源码 可以知道 ob 就是 Observe 生成的实例
+其中，this.deps 和 this.newDeps 表示 Watcher 实例持有的 Dep 实例的数组；而 this.depIds 和 this.newDepIds 分别代表 this.deps 和 this.newDeps 的 id Set。那么这里为何需要有 2 个 Dep 实例数组呢，稍后我们会解释。
+
+ob 就是 Observe 生成的实例
 为什么需要\_\_ob\_\_.dep 来存储依赖?
 因为闭包 dep 只存在 defineReactive 中，其他地方访问不到,那么哪些地方需要这个\*\*ob\*\*.dep 呢?
 
