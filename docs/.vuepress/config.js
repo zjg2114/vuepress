@@ -10,7 +10,7 @@ module.exports = {
       {
         text: '源码分析',
         items: [
-          { text: 'vue', link: '/code-analysis/vue-analysis/reactive' },
+          { text: 'vue', link: '/code-analysis/vue-analysis/reactive/' },
           { text: 'react', link: '/code-analysis/react-analysis/' }
         ]
       },
@@ -19,8 +19,21 @@ module.exports = {
       { text: '日常笔记', link: '/daily-record/io' }
     ],
     sidebar: {
-      '/code-analysis/vue-analysis/': ['reactive','computed'],
-      '/basic-knowledge/': ['javascript','es2015+', 'css','network'],
+      '/code-analysis/vue-analysis/': [
+      {
+        title: '深入响应式原理',
+        collapsable: false,
+        children: [
+          'reactive/',
+          'reactive/reactive-object',
+          'reactive/getters',
+          'reactive/setters',
+          'reactive/next-tick',
+          'reactive/computed-watcher',
+          'reactive/extra-question',
+        ]
+      },],
+      '/basic-knowledge/': ['javascript','es2015+','network'],
       '/daily-record/': ['io','el-cascader','npm','mysql日期时间类型'],
     }
   },
