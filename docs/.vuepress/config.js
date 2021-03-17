@@ -15,7 +15,7 @@ module.exports = {
         ]
       },
       { text: '基础理论', link: '/basic-knowledge/javascript' },
-      // { text: '项目实践', link: '/project/' },
+      { text: 'coding', link: '/code/debounce&throttle' },
       { text: '日常笔记', link: '/daily-record/io' }
     ],
     sidebar: {
@@ -34,6 +34,7 @@ module.exports = {
         ]
       },],
       '/basic-knowledge/': ['javascript','es2015+','network'],
+      '/code/':['debounce&throttle','bind&call&apply','array_method','promise','watcher','subscrible&publish','LRU',"tree"],
       '/daily-record/': ['io','el-cascader','npm','mysql日期时间类型'],
     }
   },
