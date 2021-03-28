@@ -15,23 +15,6 @@ let timo = new Hero("提莫");
 console.log(timo.name); // 提莫
 ```
 
-### new 操作符
-
-如何实现一个 new 操作符,首先知道 new 做了什么
-
-1. 首先创建一个空的对象，空对象的**proto**属性指向构造函数的原型对象,其实就是构造函数的 this 指向实例
-2. 把上面创建的空对象赋值构造函数内部的 this，用构造函数内部的方法修改空对象
-3. 如果构造函数返回一个非基本类型的值，则返回这个值，否则上面创建的对象
-
-```js
-// new的简单实现
-function _new(fn, ...arg) {
-  const obj = Object.create(fn.prototype);
-  const ret = fn.apply(obj, arg);
-  return ret instanceof Object ? ret : obj;
-}
-```
-
 ::: tip
 用构造函数生成实例对象，有一个缺点，那就是无法共享属性和方法。
 :::
@@ -103,9 +86,26 @@ Object.defineProperty(Hero.prototype, "constructor", {
 
 #### instanceof
 
-instanceof 运算符用来测试一个对象在其原型链中是否存在一个构造函数的 prototype 属性
-instanceof 不仅可以判断实例对象直接的构造函数，而且还能判断原型链上所有的构造函数，上面代码中 Object 在 person 的原型链中，所以返回 true。
-可见 Person.prototype 对象被重写并不影响 instanceof 的判断，因为 instanceof 是根据原型链来判断构造函数的，只要对象实例的原型链不发生变化，instanceof 便可以正确判断
+instanceof 运算符用于检测构造函数的 prototype 属性是否出现在某个实例对象的原型链上。
+
+模拟实现instanceof
+
+```js
+const myInstanceof = (instance, constructor) => {
+    const O = constructor.prototype; 
+    let CP = instance.__proto__;
+    while (true) {
+        if (CP === null) {
+            return false;
+        }
+        if (O === CP) {
+            return true;
+        }
+        CP = CP.__proto__;
+    }
+
+```
+
 
 ## 作用域&闭包
 
