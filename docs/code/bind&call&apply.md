@@ -29,11 +29,11 @@ Function.prototype.mycall = function (context) {
         throw new Error(`${this} must be function`);
     }
     context = context ? Object(context) : window; 
-    let args = [...context].slice(1)
+    let args = [...arguments].slice(1)
     let fn= Symbol()
     context[fn] = this
     let res = context[fn](...args)
-    delete context.fn
+    delete context[fn]
     return res
 }
 // 非es6 call实现
@@ -65,7 +65,7 @@ Function.prototype.myapply=function (context,arr) {
     context[fn] = this
     const args = Object.prototype.toString.call(arr)==="[object Array]"?arr:[arr]
     let res = context[fn](...args)
-    delete context.fn
+    delete context[fn]
     return res
 }
 ```
