@@ -34,7 +34,7 @@ module.exports = {
         ]
       },],
       '/basic-knowledge/': ['javascript','es2015+','network'],
-      '/code/':['debounce&throttle','bind&call&apply','array_method','promise','watcher','subscrible&publish','LRU',"tree"],
+      '/code/':['debounce&throttle','bind&call&apply','curry & componse','array_method','promise','watcher','subscrible&publish','LRU',"tree"],
       '/daily-record/': ['io','el-cascader','npm','mysql日期时间类型'],
     }
   },

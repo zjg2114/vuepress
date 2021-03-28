@@ -55,12 +55,11 @@ function getNodeBFSByRecursivel(tree) {
   let queue=[tree]
   let index = 0;
   function wideTraversal() {
-    const curNodes = queue[index]
+    const node = queue[index]
     index++
-    if (curNodes) {
-      res.push(curNodes.value)
-      curNodes.left && queue.push(curNodes.left)
-      curNodes.right && queue.push(curNodes.right)
+    if (node) {
+      res.push(node.value)
+      queue.push(node.left，node.right)
       wideTraversal()
     }
   }
@@ -83,13 +82,13 @@ function getNodeArrayBFSByQuene(tree) {
     let size = queue.length;
     res.push([]);
     while (size--) {
-      let currentNode = queue.shift();
-      res[index].push(currentNode.value);
-      if (currentNode.left) {
-        queue.push(currentNode.left);
+      let node = queue.shift();
+      res[index].push(node.value);
+      if (node.left) {
+        queue.push(node.left);
       }
-      if (currentNode.right) {
-        queue.push(currentNode.right);
+      if (node.right) {
+        queue.push(node.right);
       }
     }
     index++;
@@ -102,7 +101,7 @@ console.log(getNodeArrayBFSByQuene(tree));
 
 ## DFS
 
-深度哟徐爱你便利分为 先序(根左右) 中序(左根右) 后序(左右根)
+三种： 先序(根左右) 中序(左根右) 后序(左右根)
 
 - 深度遍历(先序) 栈实现
 
@@ -116,7 +115,7 @@ function getNodeDFSByStack(tree) {
     let node = stack.pop();
     if (node) {
       res.push(node.value);
-      stack.push(node.left, node.right);
+      stack.push(node.right, node.left);
     }
   }
   return res;
@@ -130,10 +129,12 @@ function getNodeDFSByStack(tree) {
 function getNodeDFSByRecursivel(tree) {
   let res = [];
   if (!tree) return res;
-  function deepTraversal(restTree) {
-    res.push(restTree.value);
-    restTree.left && deepTraversal(restTree.left)
-    restTree.right &&  deepTraversal(restTree.right)
+  function deepTraversal(node) {
+    if(node){
+      res.push(node.value);
+      node.left && deepTraversal(node.left)
+      node.right && deepTraversal(node.right)
+    }
   }
   deepTraversal(tree);
   return res;
