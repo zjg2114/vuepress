@@ -3,61 +3,108 @@
 -实现异步操作队列化，按照期望的顺序执行
 
 ```js
-class MyPromise {
-    constructor(executor){
+const PENDING = "pending";
+const FULFILLED = "fulfilled";
+const REJECTED = "rejected";
 
-        // then方法注册的resolve事件队列
-        this._resolveQueue=[]
-
-        // then方法注册的reject事件队列
-        this._rejectQueue=[]
-
-        // 定义resolve方法
-        let _resolve = (val) => {
-            console.log(4); 
-            while(this._resolveQueue.length > 0){
-                // 当队列中有事件时 回调函数被调用
-                const callBack = this._resolveQueue.shift()
-                callBack(val)
-            }
-        }
-
-        // 同理实现reject
-        let _reject = (val) => {
-            while(this._rejectQueue.length > 0){
-                // 当队列中有事件时 回调函数被调用
-                const callBack = this._rejectQueue.shift()
-                callBack(val)
-            }
-        }
-        // new myPromise实例时调用传进来的函数 将定义好的relove 和reject传入
-        executor(_resolve,_reject)   
+class myPromise {
+  constructor(exector) {
+    try{
+      exector(this.resolve, this.reject);
+    }catch(err){
+      this.reject(err)
+     }
+  }
+  status = PENDING;
+  value = null;
+  reason = null;
+  filfilledCallback = [];
+  rejectedCallback = [];
+  resolve = (value) => {
+    if (this.status === PENDING) {
+      this.status = FULFILLED;
+      this.value = value;
+      while (this.filfilledCallback.length) {
+        this.filfilledCallback.shift()(value);
+      }
     }
-    // then 方法
-    then(resloveFn,rejectFn) {
-        console.log(2);
-        this._resolveQueue.push(resloveFn)
-        this._rejectQueue.push(rejectFn)
+  };
+  reject = (reason) => {
+    if (this.status === PENDING) {
+      this.status = REJECTED;
+      this.reason = reason;
+      while (this.rejectedCallback.length) {
+        this.rejectedCallback.shift()(reason);
+      }
     }
+  };
+  then(onFulfilled, onRejected) {
+     const prePromise =  new myPromise((resolve, reject) => {
+      if (this.status === PENDING) {
+        this.filfilledCallback.push(()=>{
+
+          queueMicrotask(()=>{
+            try {
+              const res = onFulfilled(this.value)
+              resolvePromise(prePromise,res,resolve,reject)
+            } catch (error) {
+              reject(error)
+            }
+          });
+        })
+        this.rejectedCallback.push(()=>{
+          queueMicrotask(()=>{
+            try {
+              const res = onRejected(this.reason)
+              resolvePromise(prePromise,res,resolve,reject)
+            } catch (error) {
+              reject(error)
+            }
+          })
+        });
+      }
+      if (this.status === FULFILLED) {
+        queueMicrotask(()=>{
+          try {
+            const x = onFulfilled(this.value);
+            // 传入 resolvePromise 集中处理
+            resolvePromise(prePromise,x, resolve, reject);
+          } catch (error) {
+            reject(error)
+          }
+        })
+      }
+      if (this.status === REJECTED) {
+          queueMicrotask(()=>{
+            try {
+              const res = onRejected(this.reason)
+              resolvePromise(prePromise,res,resolve,reject)
+            } catch (error) {
+              reject(error)
+            }
+          })
+      }
+    });
+    return prePromise
+  }
 }
+function resolvePromise(prePromise,x, resolve, reject) {
+    if(prePromise === x){
+      reject(new Error('不可循环引用'))
+    }
+  // 判断x是不是 MyPromise 实例对象
+  if (x instanceof myPromise) {
+    // 执行 x，调用 then 方法，目的是将其状态变为 fulfilled 或者 rejected
+    // x.then(value => resolve(value), reason => reject(reason))
+    // 简化之后
+    x.then(resolve, reject);
+  } else {
+    // 普通值
+    resolve(x);
+  }
+}
+module.exports = myPromise;
 
-const p1 = new MyPromise((resolve, reject) => {
-    console.log(1);
-    setTimeout(() => {
-      resolve('result')
-    }, 1000);
-})
-
-p1.then(res=>{
-    console.log(res);
-})
-console.log(3);
-
-// 1,2,3,4,result
-// 1.执行new promise的函数,遇到定时器任务，放定时器队列
-// 2.then 方法调用 将事件推到队列中
-// 3.执行下面的同步代码
-// 4.定时任务被执行 resolve执行 调用then传入的方法
 ```
 
 ## 并发限制
